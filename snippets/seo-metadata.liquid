@@ -1,0 +1,33 @@
+{%- doc -%}
+  Renders optional SEO metadata and link tags
+  - Sitemap link
+  - Social media verification tags
+  - Alternate language links (hreflang)
+{%- enddoc -%}
+
+{%- comment %} Link to sitemap.xml for search engine discovery {%- endcomment -%}
+<link rel="sitemap" type="application/xml" href="{{ 'sitemap.xml' | asset_url }}">
+
+{%- comment %} Mobile friendly app links (iOS, Android) {%- endcomment -%}
+{%- if settings.apple_app_id and settings.apple_team_id -%}
+  <meta name="apple-app-site-association" content='{"applinks":{"apps":[],"details":[{"appID":"{{ settings.apple_team_id }}.{{ settings.apple_app_id }}","paths":["*"]}]},"webcredentials":{"apps":["{{ settings.apple_team_id }}.{{ settings.apple_app_id }}"]}}'> 
+{%- endif -%}
+
+{%- comment %} Charset is already handled by Shopify in HTML but explicitly declaring it is good practice {%- endcomment -%}
+
+{%- comment %} Verification meta tags for search engines {%- endcomment -%}
+{%- if settings.google_site_verification != blank -%}
+  <meta name="google-site-verification" content="{{ settings.google_site_verification }}">
+{%- endif -%}
+
+{%- if settings.microsoft_site_verification != blank -%}
+  <meta name="msvalidate.01" content="{{ settings.microsoft_site_verification }}">
+{%- endif -%}
+
+{%- comment %} Alternate language versions (hreflang) for international SEO {%- endcomment -%}
+{%- if request.locale != blank and shop.available_locales.size > 1 -%}
+  {%- for locale in shop.available_locales -%}
+    <link rel="alternate" hreflang="{{ locale.iso_code }}" href="{{ request.path | append: '' | remove: request.locale.root_url | prepend: locale.root_url | prepend: request.origin }}">
+  {%- endfor -%}
+  <link rel="alternate" hreflang="x-default" href="{{ request.origin }}{{ request.path | remove: request.locale.root_url }}">
+{%- endif -%}

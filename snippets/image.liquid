@@ -1,15 +1,17 @@
 {%- doc -%}
-  Renders the <img> element using provided image object
+  Renders the <img> element using provided image object with SEO-optimized alt text
 
   @param {object} image - image object
   @param {number} [height] - custom image height
   @param {string} [class] - additional classes
   @param {string} [text_fallback] - text to display if image is blank
+  @param {string} [alt_text] - custom alt text (overrides image.alt)
   @param {boolean} [unset_image_tag] - if true, ignores the image focal point
   @param {string} [style] - additional styles
+  @param {string} [context] - context for auto-generated alt text (product, collection, blog)
 
   @example
-  {% render 'image', image: product.featured_image, height: 300, class: 'product-image' %}
+  {% render 'image', image: product.featured_image, height: 300, class: 'product-image', alt_text: product.title %}
 {%- enddoc -%}
 {% if image != blank %}
   {% assign image_height = height | default: image.height %}
@@ -26,7 +28,19 @@
     {% assign style_value = style_value | append: 'object-position: inherit;' %}
   {% endif %}
 
-  {{ image | image_url: height: image_height | image_tag: class: class, srcset: image_srcset, style: style_value }}
+  {%- comment %} SEO-optimized alt text handling {%- endcomment -%}
+  {% assign final_alt_text = alt_text %}
+  {% if final_alt_text == blank and image.alt != blank %}
+    {% assign final_alt_text = image.alt %}
+  {% elsif final_alt_text == blank and context == 'product' and product.title %}
+    {% assign final_alt_text = product.title | append: ' - ' | append: image.alt | default: 'Product Image' %}
+  {% elsif final_alt_text == blank and context == 'collection' and collection.title %}
+    {% assign final_alt_text = collection.title | append: ' Collection Image' %}
+  {% elsif final_alt_text == blank %}
+    {% assign final_alt_text = 'Product Image' %}
+  {% endif %}
+
+  {{ image | image_url: height: image_height | image_tag: class: class, srcset: image_srcset, style: style_value, alt: final_alt_text }}
 {% elsif text_fallback %}
   {{ text_fallback }}
 {% endif %}

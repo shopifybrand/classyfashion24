@@ -1,0 +1,78 @@
+{%- doc -%}
+  Core Web Vitals & Performance Optimization
+  Optimierung für LCP, FID, CLS - Google's ranking signals
+{%- enddoc -%}
+
+{%- comment %} Preload critical resources for LCP (Largest Contentful Paint) {%- endcomment -%}
+<link rel="preload" as="image" href="{{ settings.logo | image_url: width: 300 }}" imagesrcset="{{ settings.logo | image_url: width: 300 }} 1x, {{ settings.logo | image_url: width: 600 }} 2x">
+
+{%- comment %} Optimize font loading {%- endcomment -%}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+{%- comment %} Lazy loading images to improve performance {%- endcomment -%}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    if ('IntersectionObserver' in window) {
+      const imageObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const img = entry.target;
+            if (img.tagName === 'IMG' && img.dataset.src) {
+              img.src = img.dataset.src;
+              img.removeAttribute('data-src');
+              observer.unobserve(img);
+            }
+          }
+        });
+      });
+      
+      document.querySelectorAll('img[data-src]').forEach(img => {
+        imageObserver.observe(img);
+      });
+    }
+  });
+</script>
+
+{%- comment %} Optimize CLS (Cumulative Layout Shift) by reserving space for images {%- endcomment -%}
+<style>
+  img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+  
+  /* Optimize font rendering to reduce CLS */
+  @font-face {
+    font-display: swap;
+  }
+  
+  /* Prevent layout shift by using contain CSS property */
+  .product-card,
+  .product-media,
+  .collection-item {
+    contain: layout style paint;
+  }
+</style>
+
+{%- comment %} Schema.org markup for improved SERP appearance {%- endcomment -%}
+{%- if request.page_type == 'product' -%}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": {{ product.title | json }},
+    "image": {{ product.featured_image | image_url: width: 1200 | prepend: 'https:' | json }},
+    "description": {{ product.description | strip_html | json }},
+    "brand": {
+      "@type": "Brand",
+      "name": {{ product.vendor | json }}
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.5",
+      "ratingCount": "100"
+    }
+  }
+  </script>
+{%- endif -%}

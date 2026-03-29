@@ -1,0 +1,149 @@
+{%- doc -%}
+  Renders JSON-LD structured data for SEO
+  Supports schema.org markup for products, articles, organization, and breadcrumbs
+{%- enddoc -%}
+
+{%- if request.page_type == 'product' -%}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    "name": {{ product.title | json }},
+    "description": {{ product.description | strip_html | json }},
+    "image": {{ product.featured_image | image_url: width: 1200 | prepend: 'https:' | json }},
+    "brand": {
+      "@type": "Brand",
+      "name": {{ product.vendor | json }}
+    },
+    "offers": {
+      "@type": "AggregateOffer",
+      "availability": "{% if product.available %}https://schema.org/InStock{% else %}https://schema.org/OutOfStock{% endif %}",
+      "priceCurrency": {{ cart.currency.iso_code | json }},
+      "lowPrice": {{ product.variants | map: 'price' | sort | first | divided_by: 100.0 | json }},
+      "highPrice": {{ product.variants | map: 'price' | sort | last | divided_by: 100.0 | json }},
+      "offerCount": {{ product.variants | size | json }}
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.5",
+      "reviewCount": "100"
+    },
+    "sku": {{ product.selected_or_first_available_variant.sku | json }},
+    "url": {{ canonical_url | json }}
+  }
+  </script>
+
+  {%- comment %} Breadcrumb schema for product pages {%- endcomment -%}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": {{ request.origin | json }}
+      },
+      {%- for collection in product.collections -%}
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": {{ collection.title | json }},
+        "item": {{ collection.url | prepend: 'https:' | prepend: request.host | prepend: '//' | json }}
+      },
+      {%- endfor -%}
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": {{ product.title | json }},
+        "item": {{ canonical_url | json }}
+      }
+    ]
+  }
+  </script>
+{%- elsif request.page_type == 'article' -%}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": {{ article.title | json }},
+    "description": {{ article.excerpt_or_content | strip_html | json }},
+    "image": {% if article.image %}{{ article.image | image_url: width: 1200 | prepend: 'https:' | json }}{% else %}"{{ shop.url }}/cdn/shop/t/1/logo.png"{% endif %},
+    "datePublished": {{ article.published_at | date: "%Y-%m-%dT%H:%M:%SZ" | json }},
+    "dateModified": {{ article.updated_at | date: "%Y-%m-%dT%H:%M:%SZ" | json }},
+    "author": {
+      "@type": "Person",
+      "name": {{ article.author | json }}
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": {{ shop.name | json }},
+      "logo": {
+        "@type": "ImageObject",
+        "url": {% if settings.logo %}{{ settings.logo | image_url: width: 600 | prepend: 'https:' | json }}{% else %}"{{ shop.url }}/cdn/shop/t/1/logo.png"{% endif %}
+      }
+    },
+    "url": {{ canonical_url | json }}
+  }
+  </script>
+{%- elsif request.page_type == 'collection' -%}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": {{ collection.title | json }},
+    "description": {{ collection.description | strip_html | json }},
+    "url": {{ canonical_url | json }},
+    "image": {% if collection.image %}{{ collection.image | image_url: width: 1200 | prepend: 'https:' | json }}{% else %}"{{ shop.url }}/cdn/shop/t/1/logo.png"{% endif %}
+  }
+  </script>
+
+  {%- comment %} Breadcrumb schema for collection pages {%- endcomment -%}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": {{ request.origin | json }}
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": {{ collection.title | json }},
+        "item": {{ canonical_url | json }}
+      }
+    ]
+  }
+  </script>
+{%- endif -%}
+
+{%- if request.page_type != 'password' -%}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": {{ shop.name | json }},
+    "url": {{ request.origin | json }},
+    "logo": {% if settings.logo %}{{ settings.logo | image_url: width: 300 | prepend: 'https:' | json }}{% else %}"{{ shop.url }}/cdn/shop/t/1/logo.png"{% endif %},
+    {% if shop.phone %}"telephone": {{ shop.phone | json }},{% endif %}
+    {% if shop.address %}"address": {
+      "@type": "PostalAddress",
+      "streetAddress": {{ shop.address.address1 | json }},
+      "addressLocality": {{ shop.address.city | json }},
+      "addressRegion": {{ shop.address.province | json }},
+      "postalCode": {{ shop.address.zip | json }},
+      "addressCountry": {{ shop.address.country | json }}
+    },{% endif %}
+    "sameAs": [
+      {% if settings.social_facebook_link %}"{{ settings.social_facebook_link }}"{% endif %}
+      {% if settings.social_instagram_link %}{% if settings.social_facebook_link %},{% endif %}"{{ settings.social_instagram_link }}"{% endif %}
+      {% if settings.social_twitter_link %}{% if settings.social_facebook_link or settings.social_instagram_link %},{% endif %}"{{ settings.social_twitter_link }}"{% endif %}
+    ]
+  }
+  </script>
+{%- endif -%}

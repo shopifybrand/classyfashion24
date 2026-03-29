@@ -1,0 +1,28 @@
+{%- doc -%}
+  SEO Performance Optimizations
+  - DNS prefetch for external resources
+  - Preconnect to Shopify CDN
+  - Preload critical fonts
+{%- enddoc -%}
+
+{%- comment -%} Preconnect to Shopify CDN for faster asset delivery {%- endcomment -%}
+<link rel="preconnect" href="https://cdn.shopify.com" crossorigin>
+<link rel="dns-prefetch" href="//cdn.shopify.com">
+
+{%- comment %} Preconnect to important Shopify services {%- endcomment -%}
+<link rel="preconnect" href="https://checkout.shopify.com" crossorigin>
+
+{%- comment %} DNS prefetch for analytics and third-party services {%- endcomment -%}
+<link rel="dns-prefetch" href="//www.google-analytics.com">
+<link rel="dns-prefetch" href="//www.googletagmanager.com">
+
+{%- comment %} Canonical and hreflang tags for multi-language support {%- endcomment -%}
+{%- if request.locale.iso_code != request.locale.root_locale.iso_code -%}
+  <link rel="alternate" hreflang="{{ request.locale.root_locale.iso_code }}" href="{{ request.origin }}{{ request.path }}">
+{%- endif -%}
+
+{%- comment %} Preload fonts if using custom fonts {%- endcomment -%}
+{%- if settings.font_body_google_font != blank -%}
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+{%- endif -%}

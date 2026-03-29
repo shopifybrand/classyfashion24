@@ -7,6 +7,9 @@
 >
   <head>
  {%- if content_for_header contains 'tapita-seo-script-tags' -%}{%- include 'tapita-seo-schema' -%}{%- endif -%} 
+    {%- render 'seo-performance' -%}
+    {%- render 'seo-metadata' -%}
+    {%- render 'seo-aio-settings' -%}
 
     {%- if settings.favicon != blank -%}
       <link
@@ -27,6 +30,8 @@
     {% endif %}
 
     {%- render 'meta-tags' -%}
+    {%- render 'seo-schema-markup' -%}
+    {%- render 'seo-core-web-vitals' -%}
     {%- render 'stylesheets' -%}
     {%- render 'fonts' -%}
     {%- render 'scripts' -%}
